@@ -1,0 +1,86 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: app
+  name: chaotic-app
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: app
+  name: chaotic-app
+  labels:
+    app: chaotic-app
+spec:
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: chaotic-app
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: app
+  name: chaotic-app
+  labels:
+    app: chaotic-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chaotic-app
+  template:
+    metadata:
+      labels:
+        app: chaotic-app
+    spec:
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      containers:
+        - name: chaotic-app
+          image: 'quay.io/xcoulon/chaotic-app:latest'
+          resources:
+            requests:
+              cpu: 1m
+              memory: 1Mi
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /_health/ready
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /_health/alive
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+  progressDeadlineSeconds: 600
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  serviceAccount: chaotic-app
+  serviceAccountName: chaotic-app
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  terminationGracePeriodSeconds: 30
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
