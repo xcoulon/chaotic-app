@@ -1,0 +1,21 @@
+version: '3'
+
+tasks:
+  run:
+    cmds:
+      - go run ./main.go
+
+  build-image:
+    cmds:
+      - podman build . -t=quay.io/xcoulon/chaotic-app:latest
+  
+  push-to-quay:
+    deps: [build-image]
+    cmds:
+      - podman push quay.io/xcoulon/chaotic-app:latest
+
+  push-to-quay:
+    deps: [build-image]
+    cmds:
+      - podman push quay.io/xcoulon/chaotic-app
+ 
