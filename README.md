@@ -41,6 +41,6 @@ Run the following commands to enable User Workload Monitoring:
 oc apply -f scripts/openshift-user-workload-monitoring.yaml
 ```
 
-## License
+## License
 
 chaotic-app is free and open-source software licensed under the [MIT License](LICENSE).
