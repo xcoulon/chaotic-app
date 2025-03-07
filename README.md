@@ -1,6 +1,6 @@
 # Chaotic App
 
-A tiy application based on [fiber](https://github.com/gofiber/fiber) to experiment with [Prometheus Blackbox Exporter]()
+A tiny application based on [fiber](https://github.com/gofiber/fiber) to experiment with [Prometheus Blackbox Exporter]()
 
 This application exposes 3 endpoints:
 
