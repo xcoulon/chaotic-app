@@ -1,5 +1,10 @@
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: blackbox-exporter
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   namespace: blackbox-exporter
@@ -114,15 +119,15 @@ data:
         prober: http
         timeout: 5s
         http:
+          method: GET
           valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
           valid_status_codes: []  # Defaults to 2xx
-          method: GET
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
   namespace: blackbox-exporter
-  name: blackbox-exporter
+  name: chaotic-app-ready
 spec:
   interval: 5s
   jobName: blackbox-exporter
@@ -134,6 +139,47 @@ spec:
     staticConfig:
       static:
         - http://chaotic-app.app.svc:3000/_health/ready
+      labels:
+        app: chaotic-app
+        health: ready
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  namespace: blackbox-exporter
+  name: chaotic-app-alive
+spec:
+  interval: 5s
+  jobName: blackbox-exporter
+  module: http_2xx
+  prober:
+    scheme: http
+    url: blackbox-exporter.blackbox-exporter.svc:9115
+  targets:
+    staticConfig:
+      static:
         - http://chaotic-app.app.svc:3000/_health/alive
       labels:
-        app: my-app
+        app: chaotic-app
+        health: alive
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  namespace: blackbox-exporter
+  name: chaotic-app-uptime
+spec:
+  groups:
+    - name: chaotic-app-unstable
+      interval: 15s
+      rules:
+        - alert: ChaoticAppNotReady
+          expr: avg_over_time(probe_success{app="chaotic-app"}[5m]) < 0.8
+          for: 1m
+          labels:
+            severity: error
+            namespace: "{{ $labels.namespace }}"
+            app: "{{ $labels.app }}"
+            health_endpoint: "{{ $labels.health}}"
+          annotations:
+            message: "The '{{ $labels.health}}' health endpoint has been returning too many errors"
